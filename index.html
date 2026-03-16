@@ -514,7 +514,62 @@ function collectStep(){var data={savedAt:Date.now()};document.getElementById('st
 function restoreStep(data){if(!data)return;Object.keys(data).forEach(function(k){if(k.startsWith('_')||k==='savedAt')return;var el=document.getElementById(k);if(el&&(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA'))el.value=data[k];});if(data._c)Object.keys(data._c).forEach(function(k){var e=document.getElementById(k);if(e)e.textContent=data._c[k];});if(data._col)Object.keys(data._col).forEach(function(c){var e=document.getElementById('cnv-'+c);if(e)e.textContent=data._col[c];});showToast('已恢复上次记录 ✓');}
 function autoSave(){if(!S.currentBatchId)return;var data=collectStep();var b=lsGet('qa:batch:'+S.currentBatchId);if(!b)return;if(!b.steps)b.steps={};b.steps['t'+S.currentStep]=data;b.currentStep=S.currentStep;b.boxCount=S.boxCount;b.updatedAt=Date.now();lsSet('qa:batch:'+S.currentBatchId,b);}
 function saveDraft(){autoSave();showToast('草稿已保存 ✓');}
-function saveAndNext(){autoSave();if(S.currentStep<6){var b=lsGet('qa:batch:'+S.currentBatchId);if(b){b.currentStep=S.currentStep+1;b.status='active';lsSet('qa:batch:'+S.currentBatchId,b);}showStep(S.currentStep+1);}else{var b=lsGet('qa:batch:'+S.currentBatchId);if(b){b.status='submitted';lsSet('qa:batch:'+S.currentBatchId,b);}showToast('报告已提交 ✓');setTimeout(function(){goTo('s-home');loadHome();},1200);}}
+function saveAndNext(){
+  autoSave();
+  if(S.currentStep<6){
+    var b=lsGet('qa:batch:'+S.currentBatchId);
+    if(b){b.currentStep=S.currentStep+1;b.status='active';lsSet('qa:batch:'+S.currentBatchId,b);}
+    showStep(S.currentStep+1);
+  }else{
+    var b=lsGet('qa:batch:'+S.currentBatchId);
+    if(b){b.status='submitted';lsSet('qa:batch:'+S.currentBatchId,b);}
+    showToast('提交中，正在同步到飞书...');
+    submitToFeishu(S.currentBatchId,true);
+  }
+}
+function submitT3Report(){
+  autoSave();
+  var b=lsGet('qa:batch:'+S.currentBatchId);
+  if(b){b.status='t3_submitted';lsSet('qa:batch:'+S.currentBatchId,b);}
+  showToast('提交中，正在同步到飞书...');
+  submitToFeishu(S.currentBatchId,false);
+}
+var FS={appId:'cli_a93d01570aba5ccb',appSecret:'sFV1C79tOmsQN3PfMOFqybaMuVXaiegE',appToken:'NwM1bumohaCZQ9sUbYWcBXYjn1b',tableId:'tblSupKEdW1QoNhV'};
+async function getFeishuToken(){try{var r=await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({app_id:FS.appId,app_secret:FS.appSecret})});var d=await r.json();if(d.code===0)return d.tenant_access_token;return null;}catch(e){return null;}}
+function buildT3Fields(b){
+  var st=b.steps||{},s2=st.t2||{},s3=st.t3||{},s4=st.t4||{},c=s3._c||{};
+  return {'柜号':b.id||'','原柜号':b.originalNo||'','车牌挂号':b.plate||'','到货日期':b.date||'','品牌':b.brand||'','品种':b.variety||'','产地':b.origin||'','产区':b.region||'','运输方式':b.transport||'','物流天数':parseFloat(b.days)||0,'规格':b.specs||'','预计箱数':parseFloat(b.boxes)||0,'实收箱数':parseFloat(s3['t2-actual-boxes'])||0,'质检员':b.inspector||'','果肉温度_柜头':parseFloat(s2['t1-ft-head'])||0,'果肉温度_柜中':parseFloat(s2['t1-ft-mid'])||0,'果肉温度_柜尾':parseFloat(s2['t1-ft-tail'])||0,'抽检箱数':parseFloat(s2['t1-sample-boxes'])||0,'烂刺':parseFloat(c['f-lanci'])||0,'裂口':parseFloat(c['f-crack'])||0,'发霉':0,'病虫害':parseFloat(c['f-bug'])||0,'机械伤':parseFloat(c['f-mech'])||0,'果肉质量瑕疵率':parseFloat((s3['cr']||'0').replace('%',''))||0,'死包':parseFloat(c['f-dead'])||0,'夹生':parseFloat(c['f-raw'])||0,'白肉':parseFloat(c['f-white'])||0,'烧核':parseFloat(c['f-burn'])||0,'缺房':parseFloat(c['f-miss'])||0,'糖度':parseFloat(s4['t3-sugar'])||0,'口感':s4['t3-pos']||'','净重':0,'内外包装':'','客诉数量':0,'损耗数量':0,'客诉问题类型':'','提交状态':'开柜验货报告已提交','备注':''};
+}
+async function submitToFeishu(batchId,isFinal){
+  var b=lsGet('qa:batch:'+batchId);if(!b){showToast('找不到批次数据',true);return;}
+  var token=await getFeishuToken();if(!token){showToast('飞书连接失败，数据已本地保存',true);return;}
+  var done=function(ok,msg){showToast(msg,!ok);setTimeout(function(){goTo('s-home');loadHome();},ok?1500:2000);};
+  var base='https://open.feishu.cn/open-apis/bitable/v1/apps/'+FS.appToken+'/tables/'+FS.tableId+'/records';
+  var hdr={'Content-Type':'application/json','Authorization':'Bearer '+token};
+  try{
+    if(!isFinal){
+      var r=await fetch(base,{method:'POST',headers:hdr,body:JSON.stringify({fields:buildT3Fields(b)})});
+      var d=await r.json();
+      if(d.code===0){b.feishuRecordId=d.data.record.record_id;b.status='t3_submitted';lsSet('qa:batch:'+batchId,b);done(true,'✓ 开柜验货报告已提交到飞书');}
+      else{console.error(d);done(false,'飞书同步失败('+d.code+')');}
+    }else{
+      var st=b.steps||{},s6=st.t6||{};
+      var upd={'客诉数量':parseFloat(s6['t5-complaint-qty'])||0,'损耗数量':parseFloat(s6['t5-loss-qty'])||0,'客诉问题类型':s6['t5-complaint-desc']||'','提交状态':'已结算完整质量报告','备注':s6['t5-loss-note']||''};
+      if(b.feishuRecordId){
+        var r=await fetch(base+'/'+b.feishuRecordId,{method:'PUT',headers:hdr,body:JSON.stringify({fields:upd})});
+        var d=await r.json();
+        if(d.code===0){b.status='submitted';lsSet('qa:batch:'+batchId,b);done(true,'✓ 完整质量报告已同步到飞书');}
+        else{console.error(d);done(false,'飞书更新失败('+d.code+')');}
+      }else{
+        var all=Object.assign({},buildT3Fields(b),upd);all['提交状态']='已结算完整质量报告';
+        var r=await fetch(base,{method:'POST',headers:hdr,body:JSON.stringify({fields:all})});
+        var d=await r.json();
+        if(d.code===0){b.status='submitted';lsSet('qa:batch:'+batchId,b);done(true,'✓ 完整质量报告已提交到飞书');}
+        else{console.error(d);done(false,'飞书同步失败('+d.code+')');}
+      }
+    }
+  }catch(e){console.error(e);done(false,'网络错误，数据已本地保存');}
+}
 function showToast(msg,err){var t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'#7A1C1C':'var(--g2)';t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2200);}
 function addCnt(el){var c=el.querySelector('.cnt');if(!c){c=document.createElement('span');c.className='cnt';c.textContent='1';el.appendChild(c);}else c.textContent=parseInt(c.textContent)+1;}
 function tp(el){el.classList.toggle('on');}
@@ -570,7 +625,7 @@ function BC(i){
   FC('销售区抽检','<div class="g2">'+FG('抽检日期','<input type="text" id="t3-check-date" placeholder="如 2026-03-17"/>',false)+FG('补充抽检数量','<input type="text" id="t3-check-count" placeholder="颗"/>',false)+'</div>'+
   FG('发现问题','<div class="pg"><div class="pill on" onclick="tp(this)">无新增问题</div><div class="pill" onclick="tp(this)">夹生</div><div class="pill" onclick="tp(this)">死包</div><div class="pill" onclick="tp(this)">过熟</div><div class="pill" onclick="tp(this)">白肉</div></div>')+
   FG('说明','<textarea id="t3-check-note" rows="2" placeholder="补充记录..."></textarea>')+UPL('问题果照片（水印）','现场视频'))+
-  '<div class="submit-card"><div class="sct">开柜质检报告 · 可提交</div><p>完成 T0–T3，当天开柜报告即可生成</p><button class="bp" style="background:var(--g1);margin-top:0;" onclick="showToast(\'开柜报告生成中...\')">生成并提交开柜报告</button></div>';
+  '<div class="submit-card"><div class="sct">开柜质检报告 · 可提交</div><p>完成 T0–T3，当天开柜报告即可生成</p><button class="bp" style="background:var(--g1);margin-top:0;" onclick="submitT3Report()">生成并提交开柜报告</button></div>';
   if(i===5)return FC('库存质量检查','<div class="g2">'+FG('检查日期','<input type="text" id="t4-date" placeholder="如 2026-03-18"/>',false)+FG('库存位置','<input type="text" id="t4-location" placeholder="如 A区3排"/>',false)+'</div>'+
   FG('成熟度变化','<div class="pg"><div class="pill on" onclick="tp(this)">稳定正常</div><div class="pill" onclick="tp(this)">成熟度加速</div><div class="pill" onclick="tp(this)">过熟/需处理</div></div>')+
   FG('新发现质量瑕疵','<div class="pg"><div class="pill on" onclick="tp(this)">无新增</div><div class="pill" onclick="tp(this)">烂刺增多</div><div class="pill" onclick="tp(this)">裂口</div><div class="pill" onclick="tp(this)">发霉</div><div class="pill" onclick="tp(this)">其他</div></div><textarea id="t4-defect-note" rows="2" placeholder="描述新发现瑕疵情况..." style="margin-top:9px;"></textarea>')+
