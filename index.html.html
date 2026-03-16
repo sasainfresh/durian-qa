@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>榴莲 QA 质检</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  /* ── 榴莲色系 ── */
+  --y1:#D4DC5A;   /* Pantone 609C 嫩黄绿 */
+  --y2:#c8d048;   /* 609C 加深一档 */
+  --g1:#5B9B2C;   /* Pantone 3561C 中绿 */
+  --g2:#4a8022;   /* 3561C 加深 */
+  --g3:#dff0c8;   /* 3561C 极浅底色 */
+  --b1:#7A5C1E;   /* Pantone 455C 深棕金 */
+  --b2:#5c4315;   /* 455C 加深 */
+  --b3:#f5ead6;   /* 455C 极浅 */
+
+  --tx:#1a1a18;
+  --mu:#7a7a6e;
+  --bd:rgba(0,0,0,0.09);
+  --bs:#f6f6f0;
+  --bk:#ffffff;
+  --br:10px;
+  --brl:14px;
+  --sh:0 1px 4px rgba(0,0,0,0.07);
+}
+html,body{height:100%;overflow:hidden;background:var(--bs);}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;color:var(--tx);}
+.app{max-width:430px;margin:0 auto;height:100vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:88px;}
+.screen{display:none;}.screen.active{display:block;}
+
+/* ── TOP BAR ── */
+.tb{background:var(--bk);border-bottom:0.5px solid var(--bd);padding:12px 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:12px;}
+.tb-mark{width:32px;height:32px;border-radius:9px;background:var(--g1);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tb-mark-txt{font-size:13px;font-weight:900;color:white;letter-spacing:-.5px;font-style:italic;}
+.tb-ttl{font-size:16px;font-weight:700;color:var(--tx);flex:1;letter-spacing:-.2px;}
+.tb-usr{font-size:12px;color:var(--mu);background:var(--bs);border-radius:20px;padding:4px 12px;font-weight:500;}
+
+/* ── LOGIN ── */
+.lw{padding:0 0 40px;}
+.login-hero{background:linear-gradient(150deg,#2d4a12 0%,var(--g2) 45%,var(--g1) 75%,var(--y2) 100%);padding:52px 28px 44px;position:relative;overflow:hidden;}
+.login-hero::before{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;background:rgba(212,220,90,0.12);}
+.login-hero::after{content:'';position:absolute;left:-20px;bottom:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.04);}
+.lh-logo{width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;margin-bottom:22px;position:relative;z-index:1;}
+.lh-logo-txt{font-size:24px;font-weight:900;color:white;letter-spacing:-1px;font-style:italic;}
+.lt{font-size:28px;font-weight:800;color:white;margin-bottom:6px;letter-spacing:-.5px;position:relative;z-index:1;}
+.ls{font-size:14px;color:rgba(255,255,255,0.65);font-weight:400;position:relative;z-index:1;}
+.login-form{padding:28px 28px 0;}
+.fl{font-size:12px;color:var(--mu);margin-bottom:5px;display:block;font-weight:600;letter-spacing:.03em;}
+.fg{margin-bottom:16px;}
+input,select,textarea{width:100%;padding:12px 14px;border-radius:var(--br);border:1.5px solid var(--bd);background:var(--bk);font-size:15px;color:var(--tx);font-family:inherit;-webkit-appearance:none;outline:none;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--g1);}
+textarea{resize:none;line-height:1.6;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.bp{width:100%;padding:14px;border-radius:var(--br);background:var(--g1);color:white;font-size:15px;font-weight:700;border:none;cursor:pointer;margin-top:4px;}
+.bp:active{opacity:.84;transform:scale(0.99);}
+.bg2{padding:11px 16px;border-radius:var(--br);background:transparent;color:var(--mu);font-size:14px;border:1.5px solid var(--bd);cursor:pointer;font-weight:500;}
+.bg2:active{background:var(--bs);}
+
+/* ── HOME ── */
+.hh{padding:22px 16px 14px;}
+.hg{font-size:13px;color:var(--mu);margin-bottom:4px;font-weight:500;}
+.hn{font-size:24px;font-weight:800;color:var(--tx);letter-spacing:-.4px;}
+.hd{font-size:12px;color:var(--mu);margin-top:3px;}
+.sl{font-size:10px;font-weight:700;color:var(--mu);letter-spacing:.09em;text-transform:uppercase;padding:0 16px;margin:20px 0 10px;}
+
+/* 新建批次按钮 */
+.nbc{margin:0 16px;background:var(--g1);border-radius:var(--brl);padding:20px 18px;cursor:pointer;position:relative;overflow:hidden;}
+.nbc:active{opacity:.88;}
+.nbc::before{content:'';position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(212,220,90,0.15);}
+.nbc::after{content:'';position:absolute;left:0;bottom:0;right:0;top:0;background:linear-gradient(135deg,transparent 60%,rgba(0,0,0,0.08));}
+.nbc-t{font-size:17px;font-weight:700;color:white;margin-bottom:4px;position:relative;z-index:1;}
+.nbc-s{font-size:13px;color:rgba(255,255,255,0.72);position:relative;z-index:1;}
+.nbc-i{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;color:white;line-height:1;z-index:1;}
+
+.bl{padding:0 16px;}
+.bi{background:var(--bk);border-radius:var(--brl);padding:14px 15px;margin-bottom:9px;cursor:pointer;display:flex;align-items:center;gap:12px;box-shadow:var(--sh);}
+.bi:active{background:var(--bs);}
+.bdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--b1);}
+.bdot.done{background:var(--g1);}
+.bdot.draft{background:var(--mu);}
+.binfo{flex:1;min-width:0;}
+.bid{font-size:14px;font-weight:700;color:var(--tx);}
+.bmt{font-size:12px;color:var(--mu);margin-top:2px;}
+.bst{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--b3);color:var(--b1);font-weight:700;white-space:nowrap;}
+.bst.done{background:var(--g3);color:var(--g2);}
+.bst.draft{background:var(--bs);color:var(--mu);}
+
+.stat-grid{padding:0 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:12px;}
+.stat-c{background:var(--bk);border-radius:var(--br);padding:13px 10px;text-align:center;box-shadow:var(--sh);}
+.stat-n{font-size:24px;font-weight:800;color:var(--tx);}
+.stat-l{font-size:10px;color:var(--mu);margin-top:2px;font-weight:500;}
+
+/* ── NAV ── */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--bk);border-top:0.5px solid var(--bd);display:flex;padding:8px 0 calc(10px + env(safe-area-inset-bottom));}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px;cursor:pointer;border:none;background:transparent;}
+.nb svg{width:22px;height:22px;fill:var(--mu);}
+.nb.on svg{fill:var(--g1);}
+.nb span{font-size:10px;color:var(--mu);font-weight:500;}
+.nb.on span{color:var(--g1);}
+
+/* ── PAGE HEADER ── */
+.ph{background:var(--bk);border-bottom:0.5px solid var(--bd);padding:13px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:56px;z-index:90;}
+.back{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--bd);background:var(--bs);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.back svg{width:16px;height:16px;fill:var(--tx);}
+.ph-ttl{font-size:16px;font-weight:700;color:var(--tx);}
+.ph-sub{font-size:12px;color:var(--mu);}
+
+/* ── STEP BAR ── */
+.stb{padding:0 16px;margin:12px 0 0;}
+.stt{display:flex;gap:4px;}
+.ssb{flex:1;text-align:center;padding:7px 2px 8px;border-radius:var(--br);font-size:9px;font-weight:700;color:var(--mu);cursor:pointer;border:1.5px solid var(--bd);background:var(--bk);line-height:1.3;}
+.ssb .sm{font-size:11px;display:block;}
+.ssb .sh{font-size:9px;color:var(--mu);opacity:.8;display:block;margin-top:2px;}
+.ssb.on{background:var(--g1);border-color:var(--g1);}
+.ssb.on .sm,.ssb.on .sh{color:white;opacity:1;}
+.ssb.dn{border-color:var(--y2);background:rgba(212,220,90,0.15);}
+.ssb.dn .sm{color:var(--g2);}
+.ssb.dn .sh{color:var(--g1);opacity:.9;}
+
+/* ── FORM CARD ── */
+.fc{margin:10px 16px;background:var(--bk);border-radius:var(--brl);padding:16px;box-shadow:var(--sh);}
+.fct{font-size:11px;font-weight:700;color:var(--mu);margin-bottom:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;text-transform:uppercase;letter-spacing:.06em;}
+.tag{background:var(--g3);color:var(--g2);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;text-transform:none;letter-spacing:0;}
+.warn{background:var(--b3);color:var(--b1);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;text-transform:none;letter-spacing:0;}
+.pg{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;}
+.pill{padding:8px 13px;border-radius:20px;font-size:13px;border:1.5px solid var(--bd);color:var(--mu);cursor:pointer;background:var(--bk);font-weight:500;}
+.pill.on{background:rgba(212,220,90,0.2);color:var(--g2);border-color:var(--y2);font-weight:600;}
+.pill:active{opacity:.8;}
+
+/* ── UPLOAD ── */
+.upl-row{display:flex;gap:8px;margin-top:11px;}
+.upl-btn{flex:1;display:flex;align-items:center;gap:7px;padding:11px 12px;border-radius:var(--br);border:1.5px dashed var(--bd);background:var(--bs);cursor:pointer;font-size:12px;color:var(--mu);position:relative;font-weight:500;}
+.upl-btn svg{width:15px;height:15px;opacity:.5;flex-shrink:0;}
+.upl-btn .cnt{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:10px;background:var(--g1);color:white;border-radius:20px;padding:2px 8px;font-weight:700;}
+.upl-btn:active{background:var(--g3);}
+
+/* ── COUNTER ── */
+.dr{display:flex;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--bd);}
+.dr:last-child{border-bottom:none;}
+.dn2{flex:1;font-size:14px;color:var(--tx);font-weight:500;}
+.dc{display:flex;align-items:center;gap:11px;}
+.cb{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--bd);background:var(--bk);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tx);line-height:1;}
+.cb:active{background:var(--bs);}
+.cv{font-size:17px;font-weight:700;min-width:26px;text-align:center;color:var(--tx);}
+
+/* ── AUTO CALC ── */
+.ac{background:rgba(212,220,90,0.18);border-radius:var(--br);padding:12px 14px;margin-top:13px;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(212,220,90,0.4);}
+.acl{font-size:12px;color:var(--g2);font-weight:600;}
+.acd{font-size:11px;color:var(--g1);margin-top:2px;}
+.acv{font-size:22px;font-weight:800;color:var(--g2);}
+
+/* ── STATUS BAR ── */
+.sb2{margin:10px 16px;border-radius:var(--br);padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.sb2.au{background:var(--b3);}
+.sb2.gr{background:var(--g3);}
+.sb2dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sb2.au .sb2dot{background:var(--b1);}
+.sb2.gr .sb2dot{background:var(--g1);}
+.sb2t{font-size:13px;font-weight:700;}
+.sb2.au .sb2t{color:var(--b2);}
+.sb2.gr .sb2t{color:var(--g2);}
+.sb2s{font-size:11px;opacity:.8;font-weight:500;}
+
+/* ── BOTTOM ACTIONS ── */
+.ba{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--bk);border-top:0.5px solid var(--bd);padding:12px 16px calc(18px + env(safe-area-inset-bottom));display:flex;gap:10px;}
+.ba .bp{margin:0;}
+
+/* ── CHECKLIST ── */
+.ck{display:flex;align-items:flex-start;gap:11px;padding:10px 0;border-bottom:0.5px solid var(--bd);}
+.ck:last-child{border-bottom:none;}
+.ck-box{width:24px;height:24px;border-radius:7px;border:1.5px solid var(--bd);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.ck-box.on{background:var(--g1);border-color:var(--g1);}
+.ck-box.on svg{display:block;}
+.ck-box svg{width:14px;height:14px;fill:white;display:none;}
+.ck-txt{font-size:14px;color:var(--tx);line-height:1.55;font-weight:500;}
+
+/* ── COLOR GRID ── */
+.cng{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px;}
+.cni{background:var(--bs);border-radius:var(--br);padding:9px 4px;text-align:center;}
+.cnl{font-size:11px;color:var(--mu);margin-bottom:7px;font-weight:600;}
+.cnc{display:flex;align-items:center;justify-content:center;gap:3px;}
+.cnb{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--bd);background:var(--bk);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tx);}
+.cnv{font-size:14px;font-weight:700;min-width:18px;text-align:center;color:var(--tx);}
+
+/* ── BOX CARDS ── */
+.box-card{background:var(--bk);border-radius:var(--brl);margin-bottom:10px;overflow:hidden;box-shadow:var(--sh);}
+.box-head{padding:13px 15px;display:flex;align-items:center;gap:11px;cursor:pointer;}
+.box-head:active{background:var(--bs);}
+.box-num{width:30px;height:30px;border-radius:50%;background:var(--g3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--g2);flex-shrink:0;}
+.box-info2{flex:1;}
+.box-title2{font-size:14px;font-weight:700;color:var(--tx);}
+.box-sub2{font-size:11px;color:var(--mu);margin-top:2px;font-weight:500;}
+.box-tog{font-size:15px;color:var(--mu);}
+.box-body{padding:13px 15px 15px;display:none;border-top:0.5px solid var(--bd);}
+.box-body.open{display:block;}
+.add-box{display:flex;align-items:center;justify-content:center;gap:9px;padding:15px;border-radius:var(--brl);border:2px dashed var(--y2);background:rgba(212,220,90,0.1);cursor:pointer;margin:0 16px 10px;font-size:14px;font-weight:700;color:var(--g2);}
+.add-box:active{opacity:.8;}
+
+/* ── SUMMARY ── */
+.sum-card{margin:0 16px 10px;background:linear-gradient(140deg,#2d4a12,var(--g2),var(--g1));border-radius:var(--brl);padding:16px;}
+.sum-title{font-size:10px;font-weight:700;color:rgba(255,255,255,0.65);margin-bottom:12px;text-transform:uppercase;letter-spacing:.08em;}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.sum-item{text-align:center;}
+.sum-n{font-size:24px;font-weight:800;color:white;}
+.sum-l{font-size:10px;color:rgba(255,255,255,0.65);margin-top:2px;font-weight:500;}
+
+/* ── SIZE TABLE ── */
+.sz-hd{display:grid;grid-template-columns:55px 1fr 1fr 60px;gap:7px;margin-bottom:7px;font-size:11px;color:var(--mu);font-weight:600;text-transform:uppercase;}
+.sz-rw{display:grid;grid-template-columns:55px 1fr 1fr 60px;gap:7px;align-items:center;margin-bottom:9px;}
+.sz-lbl{font-size:14px;font-weight:700;color:var(--tx);}
+.sz-diff{font-size:13px;color:var(--g1);text-align:center;font-weight:600;}
+
+/* ── ADD ROW ── */
+.add-row{display:flex;gap:8px;margin-top:9px;}
+.add-row input{flex:1;}
+.cfm{padding:11px 14px;border-radius:var(--br);background:var(--g1);color:white;font-size:13px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;}
+.saw{display:flex;gap:8px;align-items:center;}
+.saw select{flex:1;}
+.at{padding:11px 14px;border-radius:var(--br);border:1.5px solid var(--g1);background:transparent;color:var(--g1);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--g2);color:white;padding:10px 24px;border-radius:30px;font-size:13px;font-weight:700;z-index:300;opacity:0;transition:opacity .2s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.18);}
+.toast.show{opacity:1;}
+
+/* ── SUBMIT CARD ── */
+.submit-card{margin:10px 16px;background:var(--g3);border-radius:var(--brl);padding:18px;}
+.submit-card .sct{font-size:14px;font-weight:700;color:var(--g2);margin-bottom:5px;}
+.submit-card p{font-size:13px;color:var(--g1);margin-bottom:14px;font-weight:500;}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<div class="toast" id="toast"></div>
+
+<!-- ── LOGIN ── -->
+<div class="screen active" id="s-login">
+  <div class="lw">
+    <div class="login-hero">
+      <div class="lh-logo"><span class="lh-logo-txt">QA</span></div>
+      <div class="lt">榴莲 QA 质检</div>
+      <div class="ls">誉泽农供应链 · 内部系统</div>
+    </div>
+    <div class="login-form">
+      <div class="fg"><label class="fl">选择账号</label>
+        <div class="saw"><select id="ln"></select><button class="at" onclick="toggleAddUser()">+ 新增</button></div>
+        <div class="add-row" id="add-user-row" style="display:none;"><input type="text" id="new-user-input" placeholder="输入姓名"/><button class="cfm" onclick="confirmUser()">确认</button></div>
+      </div>
+      <div class="fg"><label class="fl">所属团队</label>
+        <select id="login-team"><option>嘉兴批发市场 · QA组</option><option>上海批发市场 · QA组</option></select>
+      </div>
+      <button class="bp" onclick="doLogin()">进入系统</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOPBAR ── -->
+<div class="tb" id="tb" style="display:none;">
+  <div class="tb-mark"><span class="tb-mark-txt">QA</span></div>
+  <div class="tb-ttl">榴莲 QA 质检</div>
+  <div class="tb-usr" id="tb-usr">张文庆</div>
+</div>
+
+<!-- ── HOME ── -->
+<div class="screen" id="s-home">
+  <div class="hh">
+    <div class="hg">你好，</div>
+    <div class="hn" id="home-n">张文庆</div>
+    <div class="hd" id="home-d">加载中...</div>
+  </div>
+  <div style="padding:0 16px 4px;">
+    <div class="nbc" onclick="goTo('s-binfo')">
+      <div class="nbc-t">新建验货批次</div>
+      <div class="nbc-s">开始 T0–T5 完整质检流程</div>
+      <div class="nbc-i">+</div>
+    </div>
+  </div>
+  <div class="sl">近期批次</div>
+  <div class="bl" id="batch-list"><div style="padding:28px;text-align:center;color:var(--mu);font-size:13px;">加载中...</div></div>
+  <div class="sl">本周概览</div>
+  <div class="stat-grid">
+    <div class="stat-c"><div class="stat-n" id="stat-batches">—</div><div class="stat-l">批次</div></div>
+    <div class="stat-c"><div class="stat-n" id="stat-rate" style="color:var(--b1);">—</div><div class="stat-l">平均问题率</div></div>
+    <div class="stat-c"><div class="stat-n" id="stat-complaints" style="color:var(--g1);">—</div><div class="stat-l">客诉</div></div>
+  </div>
+  <div class="bnav">
+    <button class="nb on"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>首页</span></button>
+    <button class="nb"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg><span>批次</span></button>
+    <button class="nb"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>数据</span></button>
+    <button class="nb"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>我的</span></button>
+  </div>
+</div>
+
+<!-- ── 到货信息 ── -->
+<div class="screen" id="s-binfo">
+  <div class="ph">
+    <div class="back" onclick="goTo('s-home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+    <div><div class="ph-ttl">到货信息</div><div class="ph-sub">新建批次 · * 为必填</div></div>
+  </div>
+  <div style="padding-bottom:90px;">
+    <div class="fc"><div class="fct">批次标识 <span class="tag">必填</span></div>
+      <div class="fg"><label class="fl">* 柜号</label><input type="text" id="bi-cabinet" placeholder="如 20260316-001"/></div>
+      <div class="fg"><label class="fl">* 原柜号</label><input type="text" id="bi-original" placeholder="如 TCKU1234567"/></div>
+      <div class="fg"><label class="fl">* 车牌挂号</label><input type="text" id="bi-plate" placeholder="如 浙A·12345"/></div>
+      <div class="fg"><label class="fl">* 到货日期</label><input type="text" id="bi-date"/></div>
+    </div>
+    <div class="fc"><div class="fct">产品信息</div>
+      <div class="fg"><label class="fl">品牌</label>
+        <div class="saw"><select id="brand-sel"></select><button class="at" onclick="toggleAddBrand()">+ 新增</button></div>
+        <div class="add-row" id="add-brand-row" style="display:none;"><input type="text" id="new-brand-input" placeholder="输入品牌名"/><button class="cfm" onclick="confirmBrand()">确认</button></div>
+      </div>
+      <div class="fg"><label class="fl">品种</label><select id="bi-variety"><option>干尧</option><option>金枕</option><option>猫山王</option><option>黑刺</option><option>葫芦</option></select></div>
+      <div class="fg"><label class="fl">产地</label>
+        <select id="bi-origin" onchange="onOriginChange()">
+          <option value="">请选择产地</option>
+          <option>泰国</option>
+          <option>越南</option>
+          <option>马来西亚</option>
+          <option>柬埔寨</option>
+          <option>老挝</option>
+          <option>其他</option>
+        </select>
+      </div>
+      <div class="fg" id="region-wrap" style="display:none;"><label class="fl">产区</label>
+        <div class="saw">
+          <select id="bi-region"><option value="">请选择产区</option></select>
+          <button class="at" onclick="toggleAddRegion()">+ 新增</button>
+        </div>
+        <div class="add-row" id="add-region-row" style="display:none;">
+          <input type="text" id="new-region-input" placeholder="输入产区名"/>
+          <button class="cfm" onclick="confirmRegion()">确认</button>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">运输方式</label><select id="bi-transport"><option>陆运</option><option>海运</option><option>空运</option></select></div>
+      <div class="g2">
+        <div class="fg"><label class="fl">物流天数</label><input type="text" id="bi-days" placeholder="天"/></div>
+        <div class="fg"><label class="fl">预计到货箱数</label><input type="text" id="bi-boxes" placeholder="箱"/></div>
+      </div>
+    </div>
+    <div class="fc"><div class="fct">规格</div>
+      <input type="text" id="bi-specs" placeholder="如 A3 B3 C3（多规格用空格或逗号）"/>
+      <div style="font-size:11px;color:var(--mu);margin-top:6px;font-weight:500;">T2 检验时自动关联为下拉选项</div>
+    </div>
+    <div class="fc"><div class="fct">装箱图</div>
+      <div class="upl-row">
+        <div class="upl-btn" onclick="addCnt(this)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>上传图片</div>
+        <div class="upl-btn" onclick="addCnt(this)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>上传视频</div>
+      </div>
+    </div>
+    <div class="fc"><div class="fct">质检人员</div>
+      <input type="text" id="qa-person" readonly style="background:var(--bs);color:var(--mu);"/>
+    </div>
+  </div>
+  <div class="ba">
+    <button class="bg2" onclick="goTo('s-home')">取消</button>
+    <button class="bp" style="flex:1;" onclick="createBatch()">保存并开始 T0 →</button>
+  </div>
+</div>
+
+<!-- ── T步骤 ── -->
+<div class="screen" id="s-steps">
+  <div class="ph">
+    <div class="back" onclick="exitBatch()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+    <div><div class="ph-ttl" id="step-bid">—</div><div class="ph-sub" id="step-bsub">—</div></div>
+  </div>
+  <div class="stb">
+    <div class="stt" id="step-track">
+      <button class="ssb on" onclick="showStep(0)"><span class="sm">到货</span><span class="sh">录入</span></button>
+      <button class="ssb" onclick="showStep(1)"><span class="sm">T0</span><span class="sh">开柜前</span></button>
+      <button class="ssb" onclick="showStep(2)"><span class="sm">T1</span><span class="sh">开柜</span></button>
+      <button class="ssb" onclick="showStep(3)"><span class="sm">T2</span><span class="sh">逐箱</span></button>
+      <button class="ssb" onclick="showStep(4)"><span class="sm">T3</span><span class="sh">销售中</span></button>
+      <button class="ssb" onclick="showStep(5)"><span class="sm">T4</span><span class="sh">库存</span></button>
+      <button class="ssb" onclick="showStep(6)"><span class="sm">T5</span><span class="sh">客诉</span></button>
+    </div>
+  </div>
+  <div id="step-body" style="padding-bottom:90px;"></div>
+  <div class="ba">
+    <button class="bg2" onclick="saveDraft()">暂存草稿</button>
+    <button class="bp" style="flex:1;" id="step-next-btn" onclick="saveAndNext()">保存继续 →</button>
+  </div>
+</div>
+
+</div>
+<script>
+
+// ── 产地产区数据 ──────────────────────────────────
+var ORIGINS = {
+  '泰国': [
+    {label:'北部 · 程逸', value:'北部·程逸'},
+    {label:'东北部 · 四色菊', value:'东北部·四色菊'},
+    {label:'东部 · 尖竹汶', value:'东部·尖竹汶'},
+    {label:'南部 · 春蓬', value:'南部·春蓬'},
+  ],
+  '越南': [
+    {label:'中部 · 邦美蜀', value:'中部·邦美蜀'},
+    {label:'南部 · 前江', value:'南部·前江'},
+  ],
+  '马来西亚': [
+    {label:'彭亨州', value:'彭亨州'},
+    {label:'柔佛州', value:'柔佛州'},
+  ],
+  '柬埔寨': [],
+  '老挝': [
+    {label:'巴色', value:'巴色'},
+    {label:'阿速坡', value:'阿速坡'},
+  ],
+  '其他': [],
+};
+
+function onOriginChange(){
+  var origin = document.getElementById('bi-origin').value;
+  var wrap = document.getElementById('region-wrap');
+  var sel = document.getElementById('bi-region');
+  if(!origin){wrap.style.display='none';return;}
+  // 获取该产地的自定义产区
+  var saved = lsGet('qa:regions:'+origin) || [];
+  var preset = ORIGINS[origin] || [];
+  var all = preset.concat(saved.map(function(s){return {label:s,value:s};}));
+  if(all.length === 0){
+    // 无预设产区，只显示新增
+    sel.innerHTML = '<option value="">手动输入或新增</option>';
+  } else {
+    sel.innerHTML = '<option value="">请选择产区</option>' +
+      all.map(function(o){return '<option value="'+o.value+'">'+o.label+'</option>';}).join('');
+  }
+  wrap.style.display = 'block';
+  document.getElementById('add-region-row').style.display = 'none';
+}
+
+function toggleAddRegion(){
+  var r = document.getElementById('add-region-row');
+  r.style.display = r.style.display==='none' ? 'flex' : 'none';
+  if(r.style.display==='flex') document.getElementById('new-region-input').focus();
+}
+
+function confirmRegion(){
+  var v = document.getElementById('new-region-input').value.trim();
+  if(!v) return;
+  var origin = document.getElementById('bi-origin').value;
+  if(!origin){showToast('请先选择产地',true);return;}
+  // 保存到localStorage
+  var saved = lsGet('qa:regions:'+origin) || [];
+  if(!saved.includes(v)){ saved.push(v); lsSet('qa:regions:'+origin, saved); }
+  // 加入下拉并选中
+  var sel = document.getElementById('bi-region');
+  var opt = document.createElement('option');
+  opt.value = v; opt.textContent = v; opt.selected = true;
+  sel.appendChild(opt);
+  document.getElementById('add-region-row').style.display = 'none';
+  document.getElementById('new-region-input').value = '';
+  showToast('产区已保存 ✓');
+}
+
+var S={user:'',team:'',currentBatchId:null,currentStep:0,batchSpecs:[],boxCount:0};
+function lsGet(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function init(){
+  var now=new Date(),ds=now.getFullYear()+'-'+p2(now.getMonth()+1)+'-'+p2(now.getDate());
+  var de=document.getElementById('bi-date');if(de)de.value=ds;
+  renderUserSelect(lsGet('qa:users')||['张文庆','sasa']);
+  renderBrandSelect(lsGet('qa:brands')||['兴盛','浩田']);
+}
+function p2(n){return n<10?'0'+n:n;}
+function renderUserSelect(u){var s=document.getElementById('ln');if(!s)return;s.innerHTML='';u.forEach(function(x){var o=document.createElement('option');o.value=x;o.textContent=x==='sasa'?'sasa（test）':x+'（质检员）';s.appendChild(o);});}
+function renderBrandSelect(b){var s=document.getElementById('brand-sel');if(!s)return;s.innerHTML='';b.forEach(function(x){var o=document.createElement('option');o.value=x;o.textContent=x;s.appendChild(o);});}
+function toggleAddUser(){var r=document.getElementById('add-user-row');r.style.display=r.style.display==='none'?'flex':'none';if(r.style.display==='flex')document.getElementById('new-user-input').focus();}
+function confirmUser(){var v=document.getElementById('new-user-input').value.trim();if(!v)return;var u=lsGet('qa:users')||['张文庆','sasa'];if(!u.includes(v)){u.push(v);lsSet('qa:users',u);}renderUserSelect(u);document.getElementById('ln').value=v;document.getElementById('add-user-row').style.display='none';document.getElementById('new-user-input').value='';}
+function toggleAddBrand(){var r=document.getElementById('add-brand-row');r.style.display=r.style.display==='none'?'flex':'none';if(r.style.display==='flex')document.getElementById('new-brand-input').focus();}
+function confirmBrand(){var v=document.getElementById('new-brand-input').value.trim();if(!v)return;var b=lsGet('qa:brands')||['兴盛','浩田'];if(!b.includes(v)){b.push(v);lsSet('qa:brands',b);}renderBrandSelect(b);document.getElementById('brand-sel').value=v;document.getElementById('add-brand-row').style.display='none';document.getElementById('new-brand-input').value='';}
+function doLogin(){S.user=document.getElementById('ln').value;S.team=document.getElementById('login-team').value;document.getElementById('tb-usr').textContent=S.user;document.getElementById('home-n').textContent=S.user;var qp=document.getElementById('qa-person');if(qp)qp.value=S.user;goTo('s-home');loadHome();}
+function loadHome(){
+  var now=new Date();document.getElementById('home-d').textContent=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日 · '+S.team;
+  var ids=lsGet('qa:batch-list')||[];var bl=document.getElementById('batch-list');
+  if(!ids.length){bl.innerHTML='<div style="padding:28px;text-align:center;color:var(--mu);font-size:13px;font-weight:500;">还没有批次记录</div>';document.getElementById('stat-batches').textContent='0';document.getElementById('stat-rate').textContent='—';document.getElementById('stat-complaints').textContent='0';return;}
+  var recent=ids.slice(-10).reverse();var html='';var wb=0,wc=0,rates=[];var wa=Date.now()-7*24*3600*1000;
+  recent.forEach(function(id){var b=lsGet('qa:batch:'+id);if(!b)return;var iw=b.createdAt>wa;if(iw){wb++;if(b.complaints)wc+=b.complaints;if(b.problemRate)rates.push(b.problemRate);}
+    var sc=b.status==='submitted'?'done':(b.status==='draft'?'draft':'');
+    var st=b.status==='submitted'?'已提交':(b.status==='draft'?'草稿':'进行中 '+SL(b.currentStep||0));
+    html+='<div class="bi" onclick="openBatch(\''+b.id+'\')"><div class="bdot '+(b.status==='submitted'?'done':b.status==='draft'?'draft':'')+'"></div><div class="binfo"><div class="bid">'+b.id+' · '+b.brand+' '+b.variety+'</div><div class="bmt">'+b.specs+' · '+b.boxes+'箱 · '+b.transport+b.days+'天</div></div><div class="bst '+sc+'">'+st+'</div></div>';
+  });
+  bl.innerHTML=html||'<div style="padding:28px;text-align:center;color:var(--mu);font-size:13px;">还没有批次记录</div>';
+  document.getElementById('stat-batches').textContent=wb;
+  document.getElementById('stat-rate').textContent=rates.length?(rates.reduce(function(a,b){return a+b;},0)/rates.length).toFixed(1)+'%':'—';
+  document.getElementById('stat-complaints').textContent=wc;
+}
+function SL(n){return['到货','T0','T1','T2','T3','T4','T5'][n]||'T0';}
+function createBatch(){
+  var cab=document.getElementById('bi-cabinet').value.trim(),orig=document.getElementById('bi-original').value.trim(),plate=document.getElementById('bi-plate').value.trim(),date=document.getElementById('bi-date').value.trim();
+  if(!cab||!orig||!plate||!date){showToast('柜号、原柜号、车牌挂号、到货日期均为必填',true);return;}
+  var specs=document.getElementById('bi-specs').value.trim();S.batchSpecs=specs?specs.split(/[\s,，]+/).filter(Boolean):[];
+  var b={id:cab,cabinetNo:cab,originalNo:orig,plate:plate,date:date,brand:document.getElementById('brand-sel').value,variety:document.getElementById('bi-variety').value,origin:document.getElementById('bi-origin').value,transport:document.getElementById('bi-transport').value,days:document.getElementById('bi-days').value,boxes:document.getElementById('bi-boxes').value,specs:specs,specList:S.batchSpecs,inspector:S.user,status:'active',currentStep:1,createdAt:Date.now(),updatedAt:Date.now(),steps:{},boxCount:0,complaints:0,problemRate:null};
+  lsSet('qa:batch:'+cab,b);var ids=lsGet('qa:batch-list')||[];if(!ids.includes(cab)){ids.push(cab);lsSet('qa:batch-list',ids);}
+  S.currentBatchId=cab;S.boxCount=0;openBatch(cab);
+}
+function openBatch(id){var b=lsGet('qa:batch:'+id);if(!b){showToast('找不到该批次');return;}S.currentBatchId=id;S.batchSpecs=b.specList||[];S.boxCount=b.boxCount||0;document.getElementById('step-bid').textContent=b.id;document.getElementById('step-bsub').textContent=b.brand+' '+b.variety+' · '+b.specs+' · '+b.boxes+'箱';goTo('s-steps');showStep(b.currentStep||1);}
+function exitBatch(){autoSave();goTo('s-home');loadHome();}
+var SD=[{l:'到货',h:'录入',c:'gr',t:'到货信息 · 复核',s:'批次基本信息确认'},{l:'T0',h:'开柜前',c:'au',t:'T0 · 开柜前记录',s:'拍照记录，必须为水印照片'},{l:'T1',h:'开柜',c:'au',t:'T1 · 开柜抽样',s:'按比例抽检，基础12箱'},{l:'T2',h:'逐箱',c:'au',t:'T2 · 拆箱逐颗检验',s:'逐箱录入 · 每箱独立计数'},{l:'T3',h:'销售中',c:'au',t:'T3 · 销售过程验证',s:'开果试吃 · 销售区抽检'},{l:'T4',h:'库存',c:'au',t:'T4 · 库存质量跟踪',s:'不限当天，持续补充'},{l:'T5',h:'客诉',c:'au',t:'T5 · 客诉 + 损耗记录',s:'售后处理 · 完整报告'}];
+function showStep(i){
+  S.currentStep=i;
+  document.querySelectorAll('#step-track .ssb').forEach(function(b,j){b.classList.remove('on','dn');if(j<i)b.classList.add('dn');else if(j===i)b.classList.add('on');});
+  var sd=SD[i];var saved=null;if(S.currentBatchId){var b=lsGet('qa:batch:'+S.currentBatchId);if(b&&b.steps)saved=b.steps['t'+i]||null;}
+  document.getElementById('step-body').innerHTML='<div class="sb2 '+sd.c+'"><div class="sb2dot"></div><div><div class="sb2t">'+sd.t+'</div><div class="sb2s" style="color:'+(sd.c==='gr'?'var(--g1)':'var(--b1)')+';">'+sd.s+'</div></div></div>'+BC(i);
+  var nb=document.getElementById('step-next-btn');if(nb)nb.textContent=i<6?'保存继续 '+SD[i+1].l+' →':'提交完整报告';
+  if(saved)restoreStep(saved);if(i===3&&S.boxCount===0)addBox();
+  document.getElementById('app').scrollTo(0,0);
+}
+function collectStep(){var data={savedAt:Date.now()};document.getElementById('step-body').querySelectorAll('input[id],select[id],textarea[id]').forEach(function(el){data[el.id]=el.value;});var ctr={};document.getElementById('step-body').querySelectorAll('.cv[id]').forEach(function(el){ctr[el.id]=el.textContent;});data._c=ctr;var col={};for(var i=1;i<=5;i++){var e=document.getElementById('cnv-'+i);if(e)col[i]=e.textContent;}data._col=col;data._bc=S.boxCount;return data;}
+function restoreStep(data){if(!data)return;Object.keys(data).forEach(function(k){if(k.startsWith('_')||k==='savedAt')return;var el=document.getElementById(k);if(el&&(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA'))el.value=data[k];});if(data._c)Object.keys(data._c).forEach(function(k){var e=document.getElementById(k);if(e)e.textContent=data._c[k];});if(data._col)Object.keys(data._col).forEach(function(c){var e=document.getElementById('cnv-'+c);if(e)e.textContent=data._col[c];});showToast('已恢复上次记录 ✓');}
+function autoSave(){if(!S.currentBatchId)return;var data=collectStep();var b=lsGet('qa:batch:'+S.currentBatchId);if(!b)return;if(!b.steps)b.steps={};b.steps['t'+S.currentStep]=data;b.currentStep=S.currentStep;b.boxCount=S.boxCount;b.updatedAt=Date.now();lsSet('qa:batch:'+S.currentBatchId,b);}
+function saveDraft(){autoSave();showToast('草稿已保存 ✓');}
+function saveAndNext(){autoSave();if(S.currentStep<6){var b=lsGet('qa:batch:'+S.currentBatchId);if(b){b.currentStep=S.currentStep+1;b.status='active';lsSet('qa:batch:'+S.currentBatchId,b);}showStep(S.currentStep+1);}else{var b=lsGet('qa:batch:'+S.currentBatchId);if(b){b.status='submitted';lsSet('qa:batch:'+S.currentBatchId,b);}showToast('报告已提交 ✓');setTimeout(function(){goTo('s-home');loadHome();},1200);}}
+function showToast(msg,err){var t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'#7A1C1C':'var(--g2)';t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2200);}
+function addCnt(el){var c=el.querySelector('.cnt');if(!c){c=document.createElement('span');c.className='cnt';c.textContent='1';el.appendChild(c);}else c.textContent=parseInt(c.textContent)+1;}
+function tp(el){el.classList.toggle('on');}
+function adj(id,d){var el=document.getElementById(id);if(!el)return;var v=parseInt(el.textContent)+d;if(v<0)v=0;el.textContent=v;calcRate();}
+function adjCN(n,d){var el=document.getElementById('cnv-'+n);if(!el)return;var v=parseInt(el.textContent)+d;if(v<0)v=0;el.textContent=v;}
+function adjBox(bid,id,d){var el=document.getElementById('b'+bid+'-'+id);if(!el)return;var v=parseInt(el.textContent)+d;if(v<0)v=0;el.textContent=v;}
+function calcRate(){var fids=['f-dead','f-raw','f-white','f-burn','f-miss','f-oth2'];var tot=0;fids.forEach(function(id){var e=document.getElementById(id);if(e)tot+=parseInt(e.textContent||'0');});var tc=document.getElementById('tc');var n=tc?parseInt(tc.value)||1:1;var cr=document.getElementById('cr'),cd=document.getElementById('cd');if(cr)cr.textContent=(tot/n*100).toFixed(1)+'%';if(cd)cd.textContent=tot+'颗果肉问题/'+n+'颗';}
+function calcDiff(s){var mx=parseFloat((document.getElementById('sz-'+s+'-max')||{}).value)||0,mn=parseFloat((document.getElementById('sz-'+s+'-min')||{}).value)||0,d=document.getElementById('sz-'+s+'-diff');if(d)d.textContent=(mx>0&&mn>0)?(mx-mn).toFixed(1)+'kg':'—';}
+function goTo(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});var t=document.getElementById(id);if(t){t.classList.add('active');document.getElementById('app').scrollTo(0,0);}document.getElementById('tb').style.display=(id==='s-login')?'none':'flex';}
+function FC(title,content){return '<div class="fc"><div class="fct">'+title+'</div>'+content+'</div>';}
+function FG(label,input,mb){return '<div class="fg"'+(mb===false?' style="margin-bottom:0"':'')+'>'+( label?'<label class="fl">'+label+'</label>':'')+input+'</div>';}
+function CK(t){return '<div class="ck"><div class="ck-box" onclick="this.classList.toggle(\'on\')"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="ck-txt">'+t+'</div></div>';}
+function DR(id,name,val){return '<div class="dr"><div class="dn2">'+name+'</div><div class="dc"><button class="cb" onclick="adj(\''+id+'\',-1)">−</button><span class="cv" id="'+id+'">'+(val||0)+'</span><button class="cb" onclick="adj(\''+id+'\',1)">+</button></div></div>';}
+function DRB(bid,id,name){return '<div class="dr"><div class="dn2">'+name+'</div><div class="dc"><button class="cb" onclick="adjBox('+bid+',\''+id+'\',-1)">−</button><span class="cv" id="b'+bid+'-'+id+'">0</span><button class="cb" onclick="adjBox('+bid+',\''+id+'\',1)">+</button></div></div>';}
+function CNG(){var labs=['1号','2号','3号','4号','5号'],h='<div class="cng">';for(var i=0;i<5;i++){h+='<div class="cni"><div class="cnl">'+labs[i]+'</div><div class="cnc"><button class="cnb" onclick="adjCN('+(i+1)+',-1)">−</button><span class="cnv" id="cnv-'+(i+1)+'">0</span><button class="cnb" onclick="adjCN('+(i+1)+',1)">+</button></div></div>';}return h+'</div>';}
+function UPL(p,v){return '<div class="upl-row"><div class="upl-btn" onclick="addCnt(this)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>'+(p||'图片')+'</div><div class="upl-btn" onclick="addCnt(this)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>'+(v||'视频')+'</div></div>';}
+function SO(){var h='';S.batchSpecs.forEach(function(s){h+='<option>'+s+'</option>';});return h+'<option value="">手动输入...</option>';}
+function SZR(s){return '<div class="sz-rw"><div class="sz-lbl">'+s+'</div><input type="text" placeholder="0.0" style="padding:8px;" id="sz-'+s+'-max" oninput="calcDiff(\''+s+'\')"/><input type="text" placeholder="0.0" style="padding:8px;" id="sz-'+s+'-min" oninput="calcDiff(\''+s+'\')"/><div class="sz-diff" id="sz-'+s+'-diff">—</div></div>';}
+function renderBox(n){return '<div class="box-card" id="box-'+n+'"><div class="box-head" onclick="toggleBox('+n+')"><div class="box-num">'+n+'</div><div class="box-info2"><div class="box-title2">第 '+n+' 箱</div><div class="box-sub2" id="bsub-'+n+'">展开填写</div></div><div class="box-tog" id="btog-'+n+'">▼</div></div><div class="box-body open" id="bbody-'+n+'">'+FG('规格','<select id="bspec-'+n+'" onchange="onSC('+n+')"><'+SO()+'</select><input type="text" id="bspec-txt-'+n+'" placeholder="手动输入规格" style="margin-top:7px;display:none;"/>')+
+'<div class="g2">'+FG('位置','<select id="bpos-'+n+'"><option>柜头</option><option>柜中</option><option>柜尾</option></select>',false)+FG('排号及补充','<input type="text" id="bpos-note-'+n+'" placeholder="如 上排左侧"/>',false)+'</div>'+
+'<div class="g2">'+FG('整箱重量(kg)','<input type="text" id="bwt-'+n+'" placeholder="0.0"/>',false)+FG('空箱重量(kg)','<input type="text" id="bewt-'+n+'" placeholder="0.0"/>',false)+'</div>'+
+FG('内包装情况','<div class="pg"><div class="pill on" onclick="tp(this)">包装完整</div><div class="pill" onclick="tp(this)">轻微挤压</div><div class="pill" onclick="tp(this)">破损</div></div>')+UPL('外箱+标贴（水印）','外箱视频')+
+'<div style="margin-top:13px;font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">外观缺陷</div>'+DRB(n,'lanci','烂刺')+DRB(n,'bug','病虫害')+DRB(n,'mech','机械伤')+DRB(n,'skin','表皮瑕疵')+DRB(n,'crack','裂口')+DRB(n,'oth1','其他外观')+UPL('外观问题照片（水印）','')+
+'<div style="margin-top:13px;font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">果肉缺陷</div>'+DRB(n,'dead','死包')+DRB(n,'raw','夹生')+DRB(n,'white','白肉')+DRB(n,'burn','烧核')+DRB(n,'miss','缺房')+DRB(n,'oth2','其他果肉')+
+'<div style="margin-top:12px;font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">果形</div><div class="pg"><div class="pill on" onclick="tp(this)">饱满</div><div class="pill" onclick="tp(this)">缺房</div><div class="pill" onclick="tp(this)">畸形</div></div>'+
+'<div style="margin-top:12px;font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">果肉颜色（1最浅→5最深）</div>'+CNG()+UPL('果肉照片（开缝，水印）','果肉视频')+
+FG('本箱备注','<textarea id="bnote-'+n+'" rows="2" placeholder="其他情况..."></textarea>')+
+'</div></div>';}
+function toggleBox(n){var b=document.getElementById('bbody-'+n),t=document.getElementById('btog-'+n);if(!b)return;var o=b.classList.toggle('open');if(t)t.textContent=o?'▼':'▶';}
+function onSC(n){var sel=document.getElementById('bspec-'+n),txt=document.getElementById('bspec-txt-'+n);if(sel&&txt)txt.style.display=sel.value===''?'block':'none';}
+function addBox(){S.boxCount++;if(S.boxCount>1){var pb=document.getElementById('bbody-'+(S.boxCount-1)),pt=document.getElementById('btog-'+(S.boxCount-1));if(pb)pb.classList.remove('open');if(pt)pt.textContent='▶';}var list=document.getElementById('box-list');if(!list)return;list.insertAdjacentHTML('beforeend',renderBox(S.boxCount));document.getElementById('box-cnt').textContent=S.boxCount;setTimeout(function(){var el=document.getElementById('box-'+S.boxCount);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);}
+function BC(i){
+  if(i===0)return FC('批次信息',FG('补充说明','<textarea id="t0-note" rows="3" placeholder="如有补充说明请填写..."></textarea>')+FG('质检人员','<input type="text" id="t0-inspector" value="'+S.user+'" readonly style="background:var(--bs);color:var(--mu);"/>'));
+  if(i===1)return FC('车辆及柜号记录',FG('车牌挂号（记录）','<input type="text" id="t0-plate" placeholder="如 浙A·87654"/>')+FG('柜号（记录）','<input type="text" id="t0-cabinet" placeholder="如 TCKU7654321"/>')+FG('铅封状态','<div class="pg"><div class="pill on" onclick="tp(this)">完整未开封</div><div class="pill" onclick="tp(this)">已开封/破损</div><div class="pill" onclick="tp(this)">无铅封</div></div><textarea id="t0-seal-note" rows="2" placeholder="铅封说明..." style="margin-top:9px;"></textarea>')+UPL('拍照：车牌+柜号+铅封（水印）','视频记录'))+
+  FC('柜子类型 <span class="tag">拍照说明</span>',FG('柜子类型','<div class="pg"><div class="pill on" onclick="tp(this)">20尺</div><div class="pill" onclick="tp(this)">40尺</div><div class="pill" onclick="tp(this)">45尺</div><div class="pill" onclick="tp(this)">50尺</div><div class="pill" onclick="tp(this)">拼接柜/其他</div></div><textarea id="t0-cabinet-note" rows="2" placeholder="补充说明..." style="margin-top:9px;"></textarea>')+UPL('拍照：柜子侧面全长（水印）','视频记录'))+
+  FC('冷链状态 <span class="tag">拍照记录</span>',FG('通风口状态','<div class="pg"><div class="pill on" onclick="tp(this)">关闭状态</div><div class="pill" onclick="tp(this)">打开状态</div><div class="pill" onclick="tp(this)">无法判断</div></div>')+UPL('拍照：通风口（水印）','')+FG('冷柜温度显示（℃）','<input type="text" id="t0-temp" placeholder="如 13.5"/>')+UPL('拍照：冷柜温度显示屏（水印）','')+
+  '<div class="g2">'+FG('环境温度(℃)','<input type="text" id="t0-env-temp" placeholder="如 28"/>',false)+FG('环境湿度(%)','<input type="text" id="t0-env-humi" placeholder="如 75"/>',false)+'</div>');
+  if(i===2)return FC('开柜门观察',CK('整齐度检查')+CK('是否有大面积倾斜挤压')+CK('是否有明显破损')+FG('气味评估（开柜15-20分钟后）','<div class="pg"><div class="pill on" onclick="tp(this)">清香</div><div class="pill" onclick="tp(this)">浓香</div><div class="pill" onclick="tp(this)">异味</div><div class="pill" onclick="tp(this)">其他</div></div><input type="text" id="t1-smell-note" placeholder="补充说明气味..." style="margin-top:9px;"/>')+UPL('拍照：开柜整体（水印）','开柜视频'))+
+  FC('抽检位置覆盖',FG('本次抽检总箱数','<input type="text" id="t1-sample-boxes" placeholder="箱（基础12箱）"/>')+CK('柜头已抽检')+CK('柜中已抽检')+CK('柜尾已抽检')+CK('上排已覆盖')+CK('中排已覆盖')+CK('下排已覆盖')+CK('所有规格均已兼顾')+UPL('拍照：抽检箱位置（水印）',''))+
+  FC('随车温度记录仪','<div class="g2">'+FG('最低温度(℃)','<input type="text" id="t1-temp-min" placeholder="如 11.0"/>',false)+FG('最高温度(℃)','<input type="text" id="t1-temp-max" placeholder="如 15.5"/>',false)+'</div>'+FG('是否有异常波动','<div class="pg"><div class="pill on" onclick="tp(this)">全程正常</div><div class="pill" onclick="tp(this)">有异常波动</div></div><textarea id="t1-temp-note" rows="2" placeholder="如有异常记录时段和数值..." style="margin-top:9px;"></textarea>')+UPL('拍照：温度记录仪屏幕（水印）','')+
+  '<div class="g3" style="margin-top:10px;">'+FG('柜头(℃)','<input type="text" id="t1-ft-head" placeholder="0.0"/>',false)+FG('柜中(℃)','<input type="text" id="t1-ft-mid" placeholder="0.0"/>',false)+FG('柜尾(℃)','<input type="text" id="t1-ft-tail" placeholder="0.0"/>',false)+'</div>'+FG('其他温度点补充','<textarea id="t1-ft-extra" rows="3" placeholder="如：第4点-中排左侧 14.2℃&#10;第5点-柜尾上排 15.8℃..."></textarea>'));
+  if(i===3)return '<div class="sum-card"><div class="sum-title">累计检验汇总</div><div class="sum-grid"><div class="sum-item"><div class="sum-n" id="box-cnt">0</div><div class="sum-l">已检箱数</div></div><div class="sum-item"><div class="sum-n" id="s-total">0</div><div class="sum-l">问题总数</div></div><div class="sum-item"><div class="sum-n" id="s-rate">—</div><div class="sum-l">问题率</div></div></div></div>'+
+  '<div id="box-list" style="padding:0 16px;"></div><div class="add-box" onclick="addBox()">+ 新增下一箱检验记录</div>'+
+  FC('果肉缺陷汇总 <span class="warn">所有箱累计</span>',DR('f-dead','死包')+DR('f-raw','夹生',3)+DR('f-white','白肉',1)+DR('f-burn','烧核')+DR('f-miss','缺房')+DR('f-oth2','其他果肉')+
+  '<div class="g2" style="margin-top:12px;">'+FG('抽样总颗数','<input type="text" id="tc" value="48" oninput="calcRate()"/>',false)+'<div></div></div>'+
+  '<div class="ac"><div><div class="acl">果肉问题率（自动计算）</div><div class="acd" id="cd">4颗/48颗</div></div><div class="acv" id="cr">8.3%</div></div>'+UPL('果肉问题照片（水印）','验货视频'))+
+  FC('大小果检验','<div class="sz-hd"><div>规格</div><div>最大(kg)</div><div>最小(kg)</div><div style="text-align:center;">差值</div></div>'+S.batchSpecs.map(SZR).join('')+FG('缺重备注','<textarea id="t2-weight-note" rows="2" placeholder="如：柜尾C3缺重1.0kg"></textarea>'))+
+  FC('实收箱数确认 <span class="warn">T2完成后清点</span>','<div class="g2">'+FG('实收箱数','<input type="text" id="t2-actual-boxes" placeholder="箱"/>',false)+FG('空箱数','<input type="text" id="t2-empty-boxes" placeholder="箱"/>',false)+'</div>'+FG('差异说明','<textarea id="t2-box-note" rows="2" placeholder="如有差异说明原因..."></textarea>'));
+  if(i===4)return FC('开果试吃记录','<div class="g2">'+FG('取样日期','<input type="text" id="t3-date" placeholder="如 2026-03-17"/>',false)+FG('取样位置','<select id="t3-pos"><option>柜头</option><option>柜中</option><option>柜尾</option></select>',false)+'</div>'+
+  '<div class="g2">'+FG('糖度(%)','<input type="text" id="t3-sugar" placeholder="如 32.5"/>',false)+FG('位置补充','<input type="text" id="t3-pos-note" placeholder="如 上排右侧"/>',false)+'</div>'+
+  FG('口感','<div class="pg"><div class="pill on" onclick="tp(this)">绵密</div><div class="pill" onclick="tp(this)">干香</div><div class="pill" onclick="tp(this)">偏苦</div><div class="pill" onclick="tp(this)">偏淡</div><div class="pill" onclick="tp(this)">夹生</div></div>')+
+  FG('果肉质量问题','<div class="pg"><div class="pill on" onclick="tp(this)">正常</div><div class="pill" onclick="tp(this)">死包</div><div class="pill" onclick="tp(this)">夹生</div><div class="pill" onclick="tp(this)">过熟</div><div class="pill" onclick="tp(this)">白肉</div><div class="pill" onclick="tp(this)">烧核</div></div>')+UPL('果肉剖面照片（水印）','试吃视频'))+
+  FC('销售区抽检','<div class="g2">'+FG('抽检日期','<input type="text" id="t3-check-date" placeholder="如 2026-03-17"/>',false)+FG('补充抽检数量','<input type="text" id="t3-check-count" placeholder="颗"/>',false)+'</div>'+
+  FG('发现问题','<div class="pg"><div class="pill on" onclick="tp(this)">无新增问题</div><div class="pill" onclick="tp(this)">夹生</div><div class="pill" onclick="tp(this)">死包</div><div class="pill" onclick="tp(this)">过熟</div><div class="pill" onclick="tp(this)">白肉</div></div>')+
+  FG('说明','<textarea id="t3-check-note" rows="2" placeholder="补充记录..."></textarea>')+UPL('问题果照片（水印）','现场视频'))+
+  '<div class="submit-card"><div class="sct">开柜质检报告 · 可提交</div><p>完成 T0–T3，当天开柜报告即可生成</p><button class="bp" style="background:var(--g1);margin-top:0;" onclick="showToast(\'开柜报告生成中...\')">生成并提交开柜报告</button></div>';
+  if(i===5)return FC('库存质量检查','<div class="g2">'+FG('检查日期','<input type="text" id="t4-date" placeholder="如 2026-03-18"/>',false)+FG('库存位置','<input type="text" id="t4-location" placeholder="如 A区3排"/>',false)+'</div>'+
+  FG('成熟度变化','<div class="pg"><div class="pill on" onclick="tp(this)">稳定正常</div><div class="pill" onclick="tp(this)">成熟度加速</div><div class="pill" onclick="tp(this)">过熟/需处理</div></div>')+
+  FG('新发现质量瑕疵','<div class="pg"><div class="pill on" onclick="tp(this)">无新增</div><div class="pill" onclick="tp(this)">烂刺增多</div><div class="pill" onclick="tp(this)">裂口</div><div class="pill" onclick="tp(this)">发霉</div><div class="pill" onclick="tp(this)">其他</div></div><textarea id="t4-defect-note" rows="2" placeholder="描述新发现瑕疵情况..." style="margin-top:9px;"></textarea>')+
+  FG('处理建议','<textarea id="t4-suggestion" rows="2" placeholder="如：建议加快该规格销售..."></textarea>')+UPL('库存检查照片（水印）','库存视频'));
+  if(i===6)return FC('客户投诉记录','<div class="g2">'+FG('投诉日期','<input type="text" id="t5-complaint-date" placeholder="如 2026-03-18"/>',false)+FG('客户联系（选填）','<input type="text" id="t5-customer" placeholder="手机或微信"/>',false)+'</div>'+
+  FG('投诉问题类型','<div class="pg"><div class="pill on" onclick="tp(this)">夹生</div><div class="pill" onclick="tp(this)">死包</div><div class="pill" onclick="tp(this)">白肉</div><div class="pill" onclick="tp(this)">烂刺</div><div class="pill" onclick="tp(this)">过熟</div><div class="pill" onclick="tp(this)">其他</div></div>')+
+  '<div class="g2">'+FG('涉及箱号/批次','<input type="text" id="t5-box-no" placeholder="如 A3-023"/>',false)+FG('涉及数量','<input type="text" id="t5-complaint-qty" placeholder="颗"/>',false)+'</div>'+
+  FG('问题描述','<textarea id="t5-complaint-desc" rows="2" placeholder="客户反映的具体情况..."></textarea>')+
+  FG('是否与T2结论一致','<div class="pg"><div class="pill on" onclick="tp(this)">一致</div><div class="pill" onclick="tp(this)">不一致</div><div class="pill" onclick="tp(this)">无法判断</div></div>')+
+  FG('处理结果','<div class="pg"><div class="pill" onclick="tp(this)">补货</div><div class="pill" onclick="tp(this)">退款</div><div class="pill on" onclick="tp(this)">处理中</div><div class="pill" onclick="tp(this)">不成立</div></div>')+UPL('客户提供照片',''))+
+  FC('损耗记录','<div class="g2">'+FG('记录日期','<input type="text" id="t5-loss-date" placeholder="日期"/>',false)+FG('累计损耗数量','<input type="text" id="t5-loss-qty" placeholder="颗"/>',false)+'</div>'+
+  FG('主要损耗原因','<div class="pg"><div class="pill on" onclick="tp(this)">成熟度过高</div><div class="pill" onclick="tp(this)">机械损伤</div><div class="pill" onclick="tp(this)">储存问题</div><div class="pill" onclick="tp(this)">客户退货</div><div class="pill" onclick="tp(this)">其他</div></div>')+
+  FG('损耗说明','<textarea id="t5-loss-note" rows="2" placeholder="具体描述损耗情况..."></textarea>')+UPL('损耗品照片',''))+
+  '<div class="submit-card"><div class="sct">一柜完整质量报告</div><p>T0–T5 全流程记录完成，可生成完整追溯报告</p><button class="bp" style="background:var(--g1);margin-top:0;" onclick="saveAndNext()">生成并导出完整报告</button></div>';
+  return '';
+}
+init();
+</script>
+</body>
+</html>
