@@ -503,7 +503,18 @@ function init(){
   renderBrandSelect(lsGet('qa:brands')||['兴盛','浩田']);
   injectTestBatch();
 }
-function renderUserSelect(u){var s=document.getElementById('ln');if(!s)return;s.innerHTML='';u.forEach(function(x){var o=document.createElement('option');o.value=x;o.textContent=x==='sasa'?'sasa（test）':x+'（质检员）';s.appendChild(o);});}
+function onRegionChange(){
+  var region=document.getElementById('login-region').value;
+  var s=document.getElementById('ln');if(!s)return;
+  s.innerHTML='';
+  if(!region){s.innerHTML='<option value="">请先选择城市</option>';return;}
+  var preset=QA_REGIONS[region]||[];
+  var extra=lsGet('qa:users:'+region)||[];
+  var all=preset.concat(extra.filter(function(x){return!preset.includes(x);}));
+  if(all.length===0){s.innerHTML='<option value="">待分配人员</option>';return;}
+  all.forEach(function(x){var o=document.createElement('option');o.value=x;o.textContent=x==='sasa'?'sasa（test）':x;s.appendChild(o);});
+}
+function renderUserSelect(u){}
 function renderBrandSelect(b){var s=document.getElementById('brand-sel');if(!s)return;s.innerHTML='';b.forEach(function(x){var o=document.createElement('option');o.value=x;o.textContent=x;s.appendChild(o);});}
 function toggleAddUser(){var r=document.getElementById('add-user-row');r.style.display=r.style.display==='none'?'flex':'none';if(r.style.display==='flex')document.getElementById('new-user-input').focus();}
 function confirmUser(){var v=document.getElementById('new-user-input').value.trim();if(!v)return;var u=lsGet('qa:users')||['张文庆','sasa'];if(!u.includes(v)){u.push(v);lsSet('qa:users',u);}renderUserSelect(u);document.getElementById('ln').value=v;document.getElementById('add-user-row').style.display='none';document.getElementById('new-user-input').value='';}
@@ -1235,11 +1246,3 @@ function generatePDF(isFinal){
   var w=window.open('','_blank');
   w.document.write(html);
   w.document.close();
-}
-
-// ── 辅助函数 ─────────────────────────────────────────
-function batchItem(k,v){return '<div class="batch-item"><div class="lbl">'+k+'</div><div class="val">'+(v||'—')+'</div></div>';}
-function section(title,content){return '<div class="section"><div class="section-head">'+title+'</div><div class="section-body">'+content+'</div></div>';}
-function field(k,v){return '<div class="field"><div class="k">'+k+'</div><div class="v '+(v?'':'empty')+'">'+(v||'—')+'</div></div>';}
-function defectItem(n,v,c){var cls=v>0?(c==='b'?'brown':'red'):'';return '<div class="defect-item '+(v>0?'has-'+c:'')+'" style="background:'+(v>0&&c==='b'?'#fdf5ea':v>0?'#fff4f4':'#fafaf8')+';border:1px solid '+(v>0&&c==='b'?'#e0c080':v>0?'#f0b0b0':'#eee')+';"><div class="dn">'+n+'</div><div class="dv" style="color:'+(v>0&&c==='b'?'#7A5C1E':v>0?'#9B2226':'#ccc')+';">'+v+'</div></div>';}
-</script>
