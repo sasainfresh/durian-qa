@@ -178,6 +178,16 @@ textarea{resize:none;line-height:1.6;}
 .saw{display:flex;gap:8px;align-items:center;}
 .saw select{flex:1;}
 .at{padding:11px 14px;border-radius:var(--br);border:1.5px solid var(--g1);background:transparent;color:var(--g1);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+.modal-sheet{background:var(--bk);border-radius:20px 20px 0 0;padding:24px 20px calc(28px + env(safe-area-inset-bottom));width:100%;max-width:430px;}
+.modal-title{font-size:16px;font-weight:700;color:var(--tx);margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--mu);margin-bottom:20px;}
+.modal-btn{width:100%;padding:14px;border-radius:var(--br);font-size:15px;font-weight:700;border:none;cursor:pointer;margin-bottom:10px;}
+.modal-btn.primary{background:var(--g1);color:white;}
+.modal-btn.secondary{background:var(--bs);color:var(--tx);}
+.modal-btn:last-child{margin-bottom:0;}
+
 /* toast */
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--g2);color:white;padding:10px 24px;border-radius:30px;font-size:13px;font-weight:700;z-index:300;opacity:0;transition:opacity .2s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.18);}
 .toast.show{opacity:1;}
@@ -326,6 +336,16 @@ textarea{resize:none;line-height:1.6;}
   <div class="ba">
     <button class="bg2" onclick="saveDraft()">暂存草稿</button>
     <button class="bp" style="flex:1;" id="step-next-btn" onclick="saveAndNext()">保存继续 →</button>
+  </div>
+</div>
+
+<!-- 保存后选择弹窗 -->
+<div class="modal-overlay" id="save-modal" style="display:none;" onclick="if(event.target===this)closeSaveModal()">
+  <div class="modal-sheet">
+    <div class="modal-title" id="save-modal-title">批次已保存</div>
+    <div class="modal-sub" id="save-modal-sub">接下来你想做什么？</div>
+    <button class="modal-btn primary" id="save-modal-next" onclick="">继续填写 T0 →</button>
+    <button class="modal-btn secondary" onclick="closeSaveModal();goTo('s-home');loadHome();">返回主页，稍后继续</button>
   </div>
 </div>
 
@@ -572,8 +592,7 @@ function saveBatchInfo(){
     b.specs=specs;b.specList=S.batchSpecs;b.updatedAt=Date.now();
     lsSet('qa:batch:'+S.currentBatchId,b);
     document.getElementById('bi-cabinet').readOnly=false;
-    showToast('批次信息已更新 ✓');
-    goTo('s-home');loadHome();
+    showSaveModal(S.currentBatchId, '批次信息已更新', '接下来你想做什么？');
   }else{
     var b={id:cab,cabinetNo:cab,originalNo:orig,plate:plate,date:date,
       brand:document.getElementById('brand-sel').value,
@@ -589,8 +608,20 @@ function saveBatchInfo(){
     lsSet('qa:batch:'+cab,b);
     var ids=lsGet('qa:batch-list')||[];if(!ids.includes(cab)){ids.push(cab);lsSet('qa:batch-list',ids);}
     S.currentBatchId=cab;S.boxCount=0;
-    openBatch(cab);
+    showSaveModal(cab, '批次已创建', '接下来你想做什么？');
   }
+}
+
+
+function showSaveModal(batchId, title, sub){
+  document.getElementById('save-modal-title').textContent = title;
+  document.getElementById('save-modal-sub').textContent = sub;
+  var btn = document.getElementById('save-modal-next');
+  btn.onclick = function(){ closeSaveModal(); openBatch(batchId); };
+  document.getElementById('save-modal').style.display = 'flex';
+}
+function closeSaveModal(){
+  document.getElementById('save-modal').style.display = 'none';
 }
 
 function openBatch(id){
