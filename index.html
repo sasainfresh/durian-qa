@@ -210,12 +210,17 @@ textarea{resize:none;line-height:1.6;}
       <div class="ls">誉泽农供应链 · 内部系统</div>
     </div>
     <div class="login-form">
+      <div class="fg"><label class="fl">所在城市</label>
+        <select id="login-region" onchange="onRegionChange()">
+          <option value="">请选择城市</option>
+          <option>嘉兴</option><option>郑州</option><option>广州</option>
+          <option>高碑店</option><option>长沙</option><option>青岛</option>
+          <option>无锡</option><option>管理</option>
+        </select>
+      </div>
       <div class="fg"><label class="fl">选择账号</label>
         <div class="saw"><select id="ln"></select><button class="at" onclick="toggleAddUser()">+ 新增</button></div>
         <div class="add-row" id="add-user-row" style="display:none;"><input type="text" id="new-user-input" placeholder="输入姓名"/><button class="cfm" onclick="confirmUser()">确认</button></div>
-      </div>
-      <div class="fg"><label class="fl">所属团队</label>
-        <select id="login-team"><option>嘉兴批发市场 · QA组</option><option>上海批发市场 · QA组</option></select>
       </div>
       <button class="bp" onclick="doLogin()">进入系统</button>
     </div>
@@ -351,6 +356,18 @@ textarea{resize:none;line-height:1.6;}
 
 </div>
 <script>
+
+var QA_REGIONS = {
+  '嘉兴': ['张文庆','李鹏强'],
+  '郑州': ['何明跃','董宇翔'],
+  '广州': [],
+  '高碑店': [],
+  '长沙': [],
+  '青岛': [],
+  '无锡': [],
+  '管理': ['sasa']
+};
+
 var S={user:'',team:'',currentBatchId:null,currentStep:0,batchSpecs:[],boxCount:0};
 var editMode=false;
 var ORIGINS={
@@ -482,7 +499,7 @@ function init(){
   var now=new Date();
   var ds=now.getFullYear()+'-'+p2(now.getMonth()+1)+'-'+p2(now.getDate());
   var de=document.getElementById('bi-date');if(de)de.value=ds;
-  renderUserSelect(lsGet('qa:users')||['张文庆','sasa']);
+  // 账号由地区联动，不需要预渲染
   renderBrandSelect(lsGet('qa:brands')||['兴盛','浩田']);
   injectTestBatch();
 }
@@ -507,7 +524,16 @@ function onOriginChange(){
 function toggleAddRegion(){var r=document.getElementById('add-region-row');r.style.display=r.style.display==='none'?'flex':'none';if(r.style.display==='flex')document.getElementById('new-region-input').focus();}
 function confirmRegion(){var v=document.getElementById('new-region-input').value.trim();if(!v)return;var origin=document.getElementById('bi-origin').value;if(!origin){showToast('请先选择产地',true);return;}var saved=lsGet('qa:regions:'+origin)||[];if(!saved.includes(v)){saved.push(v);lsSet('qa:regions:'+origin,saved);}var sel=document.getElementById('bi-region');var opt=document.createElement('option');opt.value=v;opt.textContent=v;opt.selected=true;sel.appendChild(opt);document.getElementById('add-region-row').style.display='none';document.getElementById('new-region-input').value='';showToast('产区已保存 ✓');}
 
-function doLogin(){S.user=document.getElementById('ln').value;S.team=document.getElementById('login-team').value;document.getElementById('tb-usr').textContent=S.user;document.getElementById('home-n').textContent=S.user;var qp=document.getElementById('qa-person');if(qp)qp.value=S.user;goTo('s-home');loadHome();}
+function doLogin(){
+  var region=document.getElementById('login-region').value;
+  var user=document.getElementById('ln').value;
+  if(!region||!user||user==='请先选择城市'||user==='待分配人员'){showToast('请选择城市和账号',true);return;}
+  S.user=user;S.team=region+' · QA组';
+  document.getElementById('tb-usr').textContent=S.user;
+  document.getElementById('home-n').textContent=S.user;
+  var qp=document.getElementById('qa-person');if(qp)qp.value=S.user;
+  goTo('s-home');loadHome();
+}
 
 function loadHome(){
   var now=new Date();
